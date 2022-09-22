@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="cache-control" content="no-cache" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />  
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Pandas processing App</title>
+  <meta name="description" content="A Serverless Streamlit application with OpenCV image processing that completely works on your browser">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.1.0/build/stlite.js"></script>
+  <script>
+    stlite.mount({
+      requirements: ["openpyxl","xlsxwriter", "matplotlib"],
+      entrypoint: "streamlit_app.py",
+      files: {
+        "streamlit_app.py": `
+
+import io
+import pandas as pd
+import streamlit as st
+import numpy as np
+from matplotlib import pyplot as plt
+
+st.title("Transform your Dataframe with Pandas")
+
+bytes_data = None
+
+img = '<img src="https://frenzy86.s3.eu-west-2.amazonaws.com/python/panda.jpg" width="100%" >'
+st.markdown(img, unsafe_allow_html=True)
+st.markdown('<p>', unsafe_allow_html=True)
+
+uploaded_file = st.file_uploader("Choose an excel", type=['xlsx','xls'])
+if uploaded_file is not None:
+        # To read file as bytes:
+        bytes_data = uploaded_file.getvalue()
+
+if bytes_data is None:
+    st.stop()
+
+df = pd.read_excel(uploaded_file)
+st.write(df.head())
+
+df = df.head(10)
+#################### export #############################
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+    # Write each dataframe to a different worksheet.
+    df.to_excel(writer,index=False)
+    # Close the Pandas Excel writer and output the Excel file to the buffer
+    writer.save()
+    st.download_button(
+        label="Download Excel Report",
+        data=buffer,
+        file_name="result.xlsx",
+        mime="application/vnd.ms-excel")
+
+######################### HIDE FOOTER #######################
+## hide footer
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
+`
+      },
+    },
+    document.getElementById("root"))
+  </script>
+</body>
+</html>
